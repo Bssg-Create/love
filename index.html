@@ -419,16 +419,7 @@ let currentTab = "home";
 function init() {
   buildGallery();
   createPetals();
-
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    togetherDate = new Date(saved);
-    if (!isNaN(togetherDate.getTime())) {
-      showMain();
-      return;
-    }
-  }
-  // Show entrance
+  localStorage.removeItem(STORAGE_KEY);
   document.getElementById("entrance").classList.remove("hidden");
 }
 
@@ -443,18 +434,12 @@ function enterMain() {
     return;
   }
 
-  const date = new Date(val + "T00:00:00");
-  if (isNaN(date.getTime())) {
-    error.textContent = "日期格式不对哦，再试一次";
+  if (val !== "2025-12-31") {
+    error.textContent = "不对哦，再想想 💕";
     return;
   }
 
-  if (date > new Date()) {
-    error.textContent = "未来的日期？时光机还没发明呢 😄";
-    return;
-  }
-
-  togetherDate = date;
+  togetherDate = new Date(val + "T00:00:00");
   localStorage.setItem(STORAGE_KEY, val);
   showMain();
 }
