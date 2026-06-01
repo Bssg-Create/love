@@ -557,36 +557,67 @@ function createPetals() {
 const AUDIO_URL = "%E6%9D%8E%E8%8D%A3%E6%B5%A9%20-%20%E6%81%8B%E4%BA%BA%20(2025%E9%BB%91%E9%A9%AC%E4%B8%96%E7%95%8C%E5%B7%A1%E5%9B%9E%E6%BC%94%E5%94%B1%E4%BC%9A%E5%90%88%E8%82%A5%E7%AB%99).ogg";
 let audio = null;
 let musicPlaying = false;
+let audioReady = false;
 
 function initAudio() {
   if (audio) return;
-  audio = new Audio(AUDIO_URL);
+  audio = new Audio();
+  audio.preload = "auto";
   audio.loop = true;
   audio.volume = 0.4;
+  audio.src = AUDIO_URL;
+  audio.load();
+
+  audio.addEventListener("canplaythrough", () => {
+    audioReady = true;
+  });
+
+  audio.addEventListener("pause", () => {
+    musicPlaying = false;
+    updatePlayerUI();
+  });
+
+  audio.addEventListener("play", () => {
+    musicPlaying = true;
+    updatePlayerUI();
+  });
+
+  audio.addEventListener("stalled", () => {
+    audio.load();
+    audio.play().catch(() => {});
+  });
+
+  audio.addEventListener("error", () => {
+    audioReady = false;
+    musicPlaying = false;
+    updatePlayerUI();
+  });
+}
+
+function updatePlayerUI() {
+  const player = document.getElementById("music-player");
+  const text = document.getElementById("music-text");
+  if (musicPlaying) {
+    player.classList.add("playing");
+    text.textContent = "暂停音乐";
+  } else {
+    player.classList.remove("playing");
+    text.textContent = audioReady ? "播放音乐" : "加载中...";
+  }
 }
 
 function toggleMusic() {
   initAudio();
-  const player = document.getElementById("music-player");
-  const text = document.getElementById("music-text");
-
   if (musicPlaying) {
     audio.pause();
-    player.classList.remove("playing");
-    text.textContent = "播放音乐";
-    musicPlaying = false;
   } else {
-    audio.play().catch(() => {
-      text.textContent = "加载中...";
-    });
-    audio.addEventListener("play", () => {
-      player.classList.add("playing");
-      text.textContent = "暂停音乐";
-      musicPlaying = true;
-    }, { once: true });
-    player.classList.add("playing");
-    text.textContent = "暂停音乐";
-    musicPlaying = true;
+    const promise = audio.play();
+    if (promise && promise.catch) {
+      promise.catch(() => {
+        audio.load();
+        audio.play().catch(() => {});
+      });
+    }
   }
 }
 
